@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — President University</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #111827;
+            --bg-card: #161d2e;
+            --bg-card-hover: #1c2540;
+            --accent: #00e5a0;
+            --accent-dim: rgba(0,229,160,0.15);
+            --accent-secondary: #f59e0b;
+            --text-primary: #e8ecf4;
+            --text-secondary: #7a8ba7;
+            --border: #1e2a3f;
+            --danger: #ef4444;
+            --info: #38bdf8;
+            --pu-red: #C8102E;
+            --pu-blue: #003366;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5 { font-family: 'Space Grotesk', sans-serif; }
+
+        /* ========== LOADING SCREEN ========== */
+        .loading-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #050810;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Animated background particles for loading */
+        .loading-bg {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+        .loading-particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0;
+            animation: floatParticle linear infinite;
+        }
+        @keyframes floatParticle {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* Radial glow behind logo */
+        .loading-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(200,16,46,0.08) 0%, rgba(0,51,102,0.06) 40%, transparent 70%);
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+
+        /* Rotating ring */
+        .loading-ring-outer {
+            position: absolute;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            border: 1px solid rgba(200,16,46,0.1);
+            animation: spinSlow 20s linear infinite;
+        }
+        .loading-ring-outer::before {
+            content: '';
+            position: absolute;
+            top: -3px; left: 50%;
+            width: 6px; height: 6px;
+            background: var(--pu-red);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--pu-red);
+        }
+        @keyframes spinSlow { to { transform: rotate(360deg); } }
+
+        .loading-ring-inner {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 1px solid rgba(0,51,102,0.12);
+            animation: spinSlow 15s linear infinite reverse;
+        }
+        .loading-ring-inner::before {
+            content: '';
+            position: absolute;
+            bottom: -3px; right: 20%;
+            width: 5px; height: 5px;
+            background: var(--pu-blue);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,51,102,0.8);
+        }
+
+        /* Logo container */
+        .loading-logo-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: logoEnter 1.2s ease forwards;
+            opacity: 0;
+        }
+        @keyframes logoEnter {
+            0% { opacity: 0; transform: translateY(30px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .loading-logo {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 30px rgba(200,16,46,0.3)) drop-shadow(0 0 60px rgba(0,51,102,0.2));
+            animation: logoBreath 2.5s ease-in-out infinite;
+        }
+        @keyframes logoBreath {
+            0%, 100% { filter: drop-shadow(0 0 30px rgba(200,16,46,0.3)) drop-shadow(0 0 60px rgba(0,51,102,0.2)); }
+            50% { filter: drop-shadow(0 0 40px rgba(200,16,46,0.5)) drop-shadow(0 0 80px rgba(0,51,102,0.35)); }
+        }
+
+        .loading-school-name {
+            margin-top: 28px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 32px;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--pu-red) 0%, #e8354a 40%, var(--pu-blue) 70%, #1a5c99 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textShimmer 3s ease-in-out infinite;
+            background-size: 200% 200%;
+        }
+        @keyframes textShimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .loading-subtitle {
+            margin-top: 8px;
+            font-size: 13px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            opacity: 0;
+            animation: fadeIn 0.6s ease 0.8s forwards;
+        }
+
+        /* Loading bar */
+        .loading-bar-container {
+            position: relative;
+            z-index: 2;
+            margin-top: 48px;
+            width: 320px;
+            opacity: 0;
+            animation: fadeIn 0.6s ease 1s forwards;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .loading-bar-track {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .loading-bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--pu-red), #e8354a, var(--pu-blue));
+            background-size: 200% 100%;
+            animation: barGradient 2s linear infinite;
+            transition: width 0.15s ease;
+            position: relative;
+        }
+        .loading-bar-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -3px;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 16px rgba(200,16,46,0.6), 0 0 30px rgba(0,51,102,0.4);
+        }
+        @keyframes barGradient {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        /* Glow reflection under bar */
+        .loading-bar-reflection {
+            width: 100%;
+            height: 20px;
+            margin-top: 2px;
+            background: linear-gradient(180deg, rgba(200,16,46,0.08), transparent);
+            border-radius: 0 0 10px 10px;
+            filter: blur(4px);
+        }
+
+        .loading-percent {
+            margin-top: 14px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .loading-status {
+            margin-top: 8px;
+            font-size: 11px;
+            color: rgba(122,139,167,0.6);
+            text-align: center;
+            letter-spacing: 1px;
+            min-height: 16px;
+        }
+
+        /* Decorative corners */
+        .corner-deco {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-color: rgba(200,16,46,0.15);
+            border-style: solid;
+            border-width: 0;
+            z-index: 1;
+        }
+        .corner-deco.tl { top: 40px; left: 40px; border-top-width: 1px; border-left-width: 1px; }
+        .corner-deco.tr { top: 40px; right: 40px; border-top-width: 1px; border-right-width: 1px; }
+        .corner-deco.bl { bottom: 40px; left: 40px; border-bottom-width: 1px; border-left-width: 1px; }
+        .corner-deco.br { bottom: 40px; right: 40px; border-bottom-width: 1px; border-right-width: 1px; }
+
+        /* Horizontal lines */
+        .h-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(200,16,46,0.1), transparent);
+            z-index: 1;
+        }
+        .h-line.top { top: 100px; left: 10%; right: 10%; }
+        .h-line.bottom { bottom: 100px; left: 10%; right: 10%; }
+
+        /* ========== DASHBOARD STYLES ========== */
+        .bg-glow {
+            position: fixed;
+            top: -200px; left: -200px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0,229,160,0.06) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+        .bg-glow-2 {
+            position: fixed;
+            bottom: -300px; right: -200px;
+            width: 700px; height: 700px;
+            background: radial-gradient(circle, rgba(245,158,11,0.04) 0%, transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 260px; height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            z-index: 50;
+            transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-logo {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px;
+        }
+        .sidebar-logo .logo-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--pu-red), var(--pu-blue));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 16px; color: white;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .sidebar-nav { padding: 16px 12px; flex: 1; overflow-y: auto; }
+        .nav-label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--text-secondary); padding: 12px 12px 8px; font-weight: 600;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; border-radius: 10px;
+            color: var(--text-secondary); cursor: pointer;
+            transition: all 0.2s; font-size: 14px; font-weight: 500; margin-bottom: 2px;
+        }
+        .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+        .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+        .nav-item i { width: 20px; text-align: center; font-size: 15px; }
+
+        .main-content {
+            margin-left: 260px; padding: 0;
+            min-height: 100vh; position: relative; z-index: 1;
+        }
+
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 32px; border-bottom: 1px solid var(--border);
+            background: rgba(10,14,26,0.85); backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 40;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .search-box {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 8px 14px; min-width: 280px;
+            transition: border-color 0.2s;
+        }
+        .search-box:focus-within { border-color: var(--accent); }
+        .search-box input {
+            background: transparent; border: none; outline: none;
+            color: var(--text-primary); font-size: 13px; width: 100%;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .search-box input::placeholder { color: var(--text-secondary); }
+        .search-box i { color: var(--text-secondary); font-size: 14px; }
+
+        .notif-btn {
+            width: 38px; height: 38px; border-radius: 10px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-secondary); transition: all 0.2s; position: relative;
+        }
+        .notif-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .notif-badge {
+            position: absolute; top: -3px; right: -3px;
+            width: 16px; height: 16px; background: var(--danger);
+            border-radius: 50%; font-size: 9px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: 700;
+        }
+        .avatar-btn {
+            width: 38px; height: 38px; border-radius: 10px;
+            overflow: hidden; cursor: pointer; border: 2px solid var(--border);
+            transition: border-color 0.2s;
+        }
+        .avatar-btn:hover { border-color: var(--accent); }
+        .avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
+
+        .page-content { padding: 28px 32px; }
+
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 22px 24px;
+            transition: all 0.25s; position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0;
+            height: 3px; border-radius: 14px 14px 0 0; opacity: 0; transition: opacity 0.25s;
+        }
+        .stat-card:hover {
+            border-color: rgba(0,229,160,0.3); transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-card.green::before { background: linear-gradient(90deg, var(--accent), #00b880); }
+        .stat-card.amber::before { background: linear-gradient(90deg, var(--accent-secondary), #d97706); }
+        .stat-card.blue::before { background: linear-gradient(90deg, var(--info), #0284c7); }
+        .stat-card.red::before { background: linear-gradient(90deg, var(--danger), #dc2626); }
+
+        .stat-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; margin-bottom: 16px;
+        }
+        .stat-icon.green { background: var(--accent-dim); color: var(--accent); }
+        .stat-icon.amber { background: rgba(245,158,11,0.15); color: var(--accent-secondary); }
+        .stat-icon.blue { background: rgba(56,189,248,0.15); color: var(--info); }
+        .stat-icon.red { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 30px; font-weight: 700; line-height: 1; margin-bottom: 4px;
+        }
+        .stat-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+        .stat-change {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 12px; font-weight: 600; margin-top: 10px; padding: 3px 8px; border-radius: 6px;
+        }
+        .stat-change.up { background: rgba(0,229,160,0.12); color: var(--accent); }
+        .stat-change.down { background: rgba(239,68,68,0.12); color: var(--danger); }
+
+        .chart-container {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px;
+        }
+        .chart-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+        }
+        .chart-tabs {
+            display: flex; background: var(--bg-primary);
+            border-radius: 8px; padding: 3px; gap: 2px;
+        }
+        .chart-tab {
+            padding: 7px 16px; border-radius: 6px; font-size: 12px; font-weight: 600;
+            cursor: pointer; color: var(--text-secondary); transition: all 0.2s;
+            border: none; background: transparent; font-family: 'DM Sans', sans-serif;
+        }
+        .chart-tab.active { background: var(--accent); color: #0a0e1a; }
+        .chart-tab:hover:not(.active) { color: var(--text-primary); }
+
+        .btn-export {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; background: var(--bg-primary); border: 1px solid var(--border);
+            color: var(--text-secondary); transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+
+        .table-container {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; overflow: hidden;
+        }
+        .table-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px; border-bottom: 1px solid var(--border);
+            flex-wrap: wrap; gap: 12px;
+        }
+        .table-search {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--bg-primary); border: 1px solid var(--border);
+            border-radius: 8px; padding: 7px 12px; min-width: 220px;
+            transition: border-color 0.2s;
+        }
+        .table-search:focus-within { border-color: var(--accent); }
+        .table-search input {
+            background: transparent; border: none; outline: none;
+            color: var(--text-primary); font-size: 13px; width: 100%;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .table-search input::placeholder { color: var(--text-secondary); }
+        .table-search i { color: var(--text-secondary); font-size: 13px; }
+
+        .btn-add {
+            display: flex; align-items: center; gap: 6px;
+            padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            cursor: pointer; background: var(--accent); border: none;
+            color: #0a0e1a; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-add:hover {
+            background: #00cc8e; transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0,229,160,0.3);
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead th {
+            text-align: left; padding: 14px 20px; font-size: 11px;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-secondary); font-weight: 600;
+            border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: var(--bg-card-hover); }
+        tbody td { padding: 14px 20px; font-size: 13px; vertical-align: middle; }
+
+        .user-cell { display: flex; align-items: center; gap: 12px; }
+        .user-avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            object-fit: cover; border: 2px solid var(--border);
+        }
+        .user-name { font-weight: 600; color: var(--text-primary); }
+        .user-email { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+
+        .badge {
+            display: inline-block; padding: 4px 10px; border-radius: 6px;
+            font-size: 11px; font-weight: 600;
+        }
+        .badge-green { background: rgba(0,229,160,0.12); color: var(--accent); }
+        .badge-amber { background: rgba(245,158,11,0.12); color: var(--accent-secondary); }
+        .badge-blue { background: rgba(56,189,248,0.12); color: var(--info); }
+        .badge-red { background: rgba(239,68,68,0.12); color: var(--danger); }
+
+        .action-btn {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; border: 1px solid var(--border); background: transparent;
+            color: var(--text-secondary); transition: all 0.2s; font-size: 13px;
+        }
+        .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+        .pagination {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 24px; border-top: 1px solid var(--border);
+            flex-wrap: wrap; gap: 12px;
+        }
+        .pagination-info { font-size: 13px; color: var(--text-secondary); }
+        .pagination-btns { display: flex; gap: 4px; }
+        .page-btn {
+            width: 34px; height: 34px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-secondary); cursor: pointer; font-size: 13px;
+            font-weight: 500; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+        }
+        .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .page-btn.active {
+            background: var(--accent); border-color: var(--accent);
+            color: #0a0e1a; font-weight: 700;
+        }
+
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+            z-index: 100; display: none; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; width: 100%; max-width: 500px;
+            padding: 28px; animation: modalIn 0.25s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-label {
+            display: block; font-size: 12px; font-weight: 600;
+            color: var(--text-secondary); margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .form-input {
+            width: 100%; padding: 10px 14px; border-radius: 8px;
+            border: 1px solid var(--border); background: var(--bg-primary);
+            color: var(--text-primary); font-size: 14px;
+            font-family: 'DM Sans', sans-serif; transition: border-color 0.2s; outline: none;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        .form-input::placeholder { color: var(--text-secondary); }
+        .modal-actions {
+            display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;
+        }
+        .btn-cancel {
+            padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            cursor: pointer; background: transparent; border: 1px solid var(--border);
+            color: var(--text-secondary); transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-cancel:hover { border-color: var(--text-primary); color: var(--text-primary); }
+        .btn-submit {
+            padding: 10px 24px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            cursor: pointer; background: var(--accent); border: none;
+            color: #0a0e1a; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+        }
+        .btn-submit:hover { background: #00cc8e; }
+
+        .toast-container {
+            position: fixed; top: 20px; right: 20px; z-index: 200;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .toast {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px 20px; font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 10px;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4); min-width: 260px;
+        }
+        .toast.success { border-left: 3px solid var(--accent); }
+        .toast.error { border-left: 3px solid var(--danger); }
+        .toast.success i { color: var(--accent); }
+        .toast.error i { color: var(--danger); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(40px); }
+        }
+
+        .hamburger {
+            display: none; width: 38px; height: 38px; border-radius: 10px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-secondary); font-size: 16px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeInUp 0.5s ease forwards; opacity: 0; }
+
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .hamburger { display: flex; }
+        }
+        @media (max-width: 768px) {
+            .page-content { padding: 20px 16px; }
+            .topbar { padding: 12px 16px; }
+            .search-box { min-width: 180px; }
+            .stat-value { font-size: 24px; }
+            .loading-school-name { font-size: 22px; letter-spacing: 3px; }
+            .loading-bar-container { width: 260px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========== LOADING SCREEN ========== -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-bg" id="loadingBg"></div>
+
+        <!-- Decorative elements -->
+        <div class="loading-glow"></div>
+        <div class="loading-ring-outer"></div>
+        <div class="loading-ring-inner"></div>
+        <div class="corner-deco tl"></div>
+        <div class="corner-deco tr"></div>
+        <div class="corner-deco bl"></div>
+        <div class="corner-deco br"></div>
+        <div class="h-line top"></div>
+        <div class="h-line bottom"></div>
+
+        <!-- Logo & Name -->
+        <div class="loading-logo-container">
+            <img class="loading-logo"
+                 src="https://z-cdn-media.chatglm.cn/files/d81eeafa-aae5-4001-9eeb-df3e12809a2c.png?auth_key=1878863639-776ab825874c48939059d6034e60a0b5-0-11223b76df725d589275b5155f36f8ae"
+                 alt="President University Logo">
+            <div class="loading-school-name">President University</div>
+            <div class="loading-subtitle">Admin Dashboard System</div>
+        </div>
+
+        <!-- Loading Bar -->
+        <div class="loading-bar-container">
+            <div class="loading-bar-track">
+                <div class="loading-bar-fill" id="loadingBarFill"></div>
+            </div>
+            <div class="loading-bar-reflection" id="barReflection"></div>
+            <div class="loading-percent" id="loadingPercent">0%</div>
+            <div class="loading-status" id="loadingStatus">Memuat konfigurasi sistem...</div>
+        </div>
+    </div>
+
+    <!-- ========== DASHBOARD ========== -->
+    <div class="bg-glow"></div>
+    <div class="bg-glow-2"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">PU</div>
+            <div>
+                <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px;">President Univ</div>
+                <div style="font-size:11px; color:var(--text-secondary);">Admin Dashboard</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Menu Utama</div>
+            <div class="nav-item active" data-page="dashboard">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </div>
+            <div class="nav-item" data-page="users">
+                <i class="fas fa-users"></i> Data Pengguna
+            </div>
+            <div class="nav-item" data-page="analytics">
+                <i class="fas fa-chart-bar"></i> Analytics
+            </div>
+            <div class="nav-item" data-page="schools">
+                <i class="fas fa-school"></i> Sekolah
+            </div>
+            <div class="nav-label">Lainnya</div>
+            <div class="nav-item">
+                <i class="fas fa-envelope"></i> Pesan
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-cog"></i> Pengaturan
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-question-circle"></i> Bantuan
+            </div>
+        </nav>
+        <div style="padding:16px 20px; border-top:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <img src="https://picsum.photos/seed/admin99/40/40.jpg" style="width:36px;height:36px;border-radius:8px;object-fit:cover;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;">Admin Utama</div>
+                    <div style="font-size:11px;color:var(--text-secondary);">admin@president.ac.id</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Cari sesuatu..." aria-label="Search">
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="notif-btn" aria-label="Notifikasi">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge">3</span>
+                </div>
+                <div class="avatar-btn" aria-label="Profil">
+                    <img src="https://picsum.photos/seed/admin99/40/40.jpg" alt="Admin avatar">
+                </div>
+            </div>
+        </header>
+
+        <main class="page-content">
+            <div class="animate-in" style="margin-bottom:28px; animation-delay:0s;">
+                <h1 style="font-size:28px; font-weight:700; margin-bottom:4px;">Admin Dashboard</h1>
+                <p style="color:var(--text-secondary); font-size:14px;">Analytics Overview &mdash; President University</p>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+                <div class="stat-card green animate-in" style="animation-delay:0.1s;">
+                    <div class="stat-icon green"><i class="fas fa-users"></i></div>
+                    <div class="stat-value" data-count="1247">0</div>
+                    <div class="stat-label">Total Pengguna</div>
+                    <div class="stat-change up"><i class="fas fa-arrow-up" style="font-size:10px;"></i> 12.5%</div>
+                </div>
+                <div class="stat-card amber animate-in" style="animation-delay:0.15s;">
+                    <div class="stat-icon amber"><i class="fas fa-mouse-pointer"></i></div>
+                    <div class="stat-value" data-count="384">0</div>
+                    <div class="stat-label">Klik Web Bulan Ini</div>
+                    <div class="stat-change up"><i class="fas fa-arrow-up" style="font-size:10px;"></i> 8.2%</div>
+                </div>
+                <div class="stat-card blue animate-in" style="animation-delay:0.2s;">
+                    <div class="stat-icon blue"><i class="fas fa-school"></i></div>
+                    <div class="stat-value" data-count="56">0</div>
+                    <div class="stat-label">Sekolah Terdaftar</div>
+                    <div class="stat-change up"><i class="fas fa-arrow-up" style="font-size:10px;"></i> 3.1%</div>
+                </div>
+                <div class="stat-card red animate-in" style="animation-delay:0.25s;">
+                    <div class="stat-icon red"><i class="fas fa-user-plus"></i></div>
+                    <div class="stat-value" data-count="89">0</div>
+                    <div class="stat-label">Pendaftar Baru</div>
+                    <div class="stat-change down"><i class="fas fa-arrow-down" style="font-size:10px;"></i> 2.4%</div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 340px; gap:16px; margin-bottom:28px;" class="chart-grid">
+                <div class="chart-container animate-in" style="animation-delay:0.3s;">
+                    <div class="chart-header">
+                        <div>
+                            <h3 style="font-size:16px; font-weight:700;">Statistik Kategori</h3>
+                            <p style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Distribusi berdasarkan tipe pengguna</p>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                            <div class="chart-tabs">
+                                <button class="chart-tab active" data-type="bar">BAR CHART</button>
+                                <button class="chart-tab" data-type="line">LINE CHART</button>
+                            </div>
+                            <button class="btn-export" id="exportChartCSV">
+                                <i class="fas fa-download"></i> EXPORT CSV
+                            </button>
+                        </div>
+                    </div>
+                    <div style="height:280px; position:relative;">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="animate-in" style="animation-delay:0.35s; display:flex; flex-direction:column; gap:16px;">
+                    <div class="stat-card" style="padding:18px 20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                            <span style="font-size:13px; font-weight:600; color:var(--text-secondary);">Kategori Analisis</span>
+                            <span style="font-size:22px; font-weight:700; color:var(--accent);">342</span>
+                        </div>
+                        <div style="height:6px; background:var(--bg-primary); border-radius:3px; overflow:hidden;">
+                            <div style="width:68%; height:100%; background:linear-gradient(90deg,var(--accent),#00b880); border-radius:3px;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="padding:18px 20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                            <span style="font-size:13px; font-weight:600; color:var(--text-secondary);">Kategori Kreatif</span>
+                            <span style="font-size:22px; font-weight:700; color:var(--accent-secondary);">278</span>
+                        </div>
+                        <div style="height:6px; background:var(--bg-primary); border-radius:3px; overflow:hidden;">
+                            <div style="width:55%; height:100%; background:linear-gradient(90deg,var(--accent-secondary),#d97706); border-radius:3px;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="padding:18px 20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                            <span style="font-size:13px; font-weight:600; color:var(--text-secondary);">Kategori Praktik</span>
+                            <span style="font-size:22px; font-weight:700; color:var(--info);">198</span>
+                        </div>
+                        <div style="height:6px; background:var(--bg-primary); border-radius:3px; overflow:hidden;">
+                            <div style="width:40%; height:100%; background:linear-gradient(90deg,var(--info),#0284c7); border-radius:3px;"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="padding:18px 20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                            <span style="font-size:13px; font-weight:600; color:var(--text-secondary);">Kategori Sosial</span>
+                            <span style="font-size:22px; font-weight:700; color:#a78bfa;">429</span>
+                        </div>
+                        <div style="height:6px; background:var(--bg-primary); border-radius:3px; overflow:hidden;">
+                            <div style="width:85%; height:100%; background:linear-gradient(90deg,#a78bfa,#7c3aed); border-radius:3px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container animate-in" style="animation-delay:0.4s;">
+                <div class="table-header">
+                    <div>
+                        <h3 style="font-size:16px; font-weight:700;">Data Pengguna</h3>
+                        <p style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Daftar lengkap nama, email, alamat, dan sekolah</p>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <div class="table-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="tableSearch" placeholder="Cari pengguna..." aria-label="Cari pengguna">
+                        </div>
+                        <button class="btn-export" id="exportTableCSV">
+                            <i class="fas fa-download"></i> EXPORT CSV
+                        </button>
+                        <button class="btn-add" id="addUserBtn">
+                            <i class="fas fa-plus"></i> Tambah Pengguna
+                        </button>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama & Email</th>
+                                <th>Alamat</th>
+                                <th>Sekolah</th>
+                                <th>Kategori</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination">
+                    <div class="pagination-info" id="paginationInfo">Menampilkan 1-8 dari 20 data</div>
+                    <div class="pagination-btns" id="paginationBtns"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="addUserModal">
+        <div class="modal">
+            <h3 class="modal-title">Tambah Pengguna Baru</h3>
+            <div class="form-group">
+                <label class="form-label">Nama Lengkap</label>
+                <input type="text" class="form-input" id="inputName" placeholder="Masukkan nama lengkap">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="inputEmail" placeholder="contoh@email.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Alamat</label>
+                <input type="text" class="form-input" id="inputAddress" placeholder="Masukkan alamat lengkap">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sekolah</label>
+                <input type="text" class="form-input" id="inputSchool" placeholder="Nama sekolah">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kategori</label>
+                <select class="form-input" id="inputCategory">
+                    <option value="Analisis">Analisis</option>
+                    <option value="Kreatif">Kreatif</option>
+                    <option value="Praktik">Praktik</option>
+                    <option value="Sosial">Sosial</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="cancelModal">Batal</button>
+                <button class="btn-submit" id="submitUser">Simpan Data</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ==================== LOADING SCREEN ====================
+        const loadingMessages = [
+            'Memuat konfigurasi sistem...',
+            'Menghubungkan ke database...',
+            'Memverifikasi akses pengguna...',
+            'Memuat data President University...',
+            'Menyiapkan analytics engine...',
+            'Mengoptimalkan performa...',
+            'Memuat komponen dashboard...',
+            'Hampir selesai, mohon tunggu...'
+        ];
+
+        // Buat partikel floating di loading screen
+        function createLoadingParticles() {
+            const bg = document.getElementById('loadingBg');
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'loading-particle';
+                const size = Math.random() * 3 + 1;
+                const isRed = Math.random() > 0.5;
+                p.style.cssText = `
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${Math.random() * 100}%;
+                    background: ${isRed ? 'rgba(200,16,46,0.5)' : 'rgba(0,51,102,0.5)'};
+                    box-shadow: 0 0 ${size * 3}px ${isRed ? 'rgba(200,16,46,0.3)' : 'rgba(0,51,102,0.3)'};
+                    animation-duration: ${Math.random() * 8 + 6}s;
+                    animation-delay: ${Math.random() * 5}s;
+                `;
+                bg.appendChild(p);
+            }
+        }
+        createLoadingParticles();
+
+        // Animasi loading bar
+        let loadProgress = 0;
+        const loadingBar = document.getElementById('loadingBarFill');
+        const loadingPercent = document.getElementById('loadingPercent');
+        const loadingStatus = document.getElementById('loadingStatus');
+        const barReflection = document.getElementById('barReflection');
+        let msgIndex = 0;
+
+        function animateLoading() {
+            // Kecepatan loading bervariasi untuk efek realistis
+            let increment;
+            if (loadProgress < 30) increment = Math.random() * 3 + 1;
+            else if (loadProgress < 60) increment = Math.random() * 2.5 + 0.5;
+            else if (loadProgress < 85) increment = Math.random() * 1.5 + 0.3;
+            else if (loadProgress < 95) increment = Math.random() * 0.8 + 0.2;
+            else increment = Math.random() * 0.5 + 0.3;
+
+            loadProgress = Math.min(loadProgress + increment, 100);
+
+            loadingBar.style.width = loadProgress + '%';
+            loadingPercent.textContent = Math.floor(loadProgress) + '%';
+
+            // Update reflection glow
+            const reflectionOpacity = 0.05 + (loadProgress / 100) * 0.1;
+            barReflection.style.background = `linear-gradient(180deg, rgba(200,16,46,${reflectionOpacity}), transparent)`;
+
+            // Ganti pesan loading secara bertahap
+            const newMsgIndex = Math.floor((loadProgress / 100) * loadingMessages.length);
+            if (newMsgIndex !== msgIndex && newMsgIndex < loadingMessages.length) {
+                msgIndex = newMsgIndex;
+                loadingStatus.style.opacity = '0';
+                setTimeout(() => {
+                    loadingStatus.textContent = loadingMessages[msgIndex];
+                    loadingStatus.style.opacity = '1';
+                }, 200);
+            }
+
+            if (loadProgress >= 100) {
+                // Loading selesai
+                setTimeout(() => {
+                    loadingStatus.textContent = 'Selamat datang!';
+                    loadingPercent.textContent = '100%';
+                }, 200);
+
+                setTimeout(() => {
+                    const screen = document.getElementById('loadingScreen');
+                    screen.classList.add('hidden');
+                    // Inisialisasi dashboard setelah loading screen hilang
+                    setTimeout(initDashboard, 400);
+                }, 800);
+                return;
+            }
+
+            // Delay bervariasi untuk efek natural
+            const delay = loadProgress < 85 ? Math.random() * 60 + 20 : Math.random() * 100 + 50;
+            setTimeout(animateLoading, delay);
+        }
+
+        // Mulai loading setelah delay singkat
+        setTimeout(animateLoading, 600);
+
+        // ==================== DASHBOARD DATA ====================
+        const userData = [
+            { id: 1, name: "Ahmad Fauzan", email: "ahmad.fauzan@president.ac.id", address: "Jl. Merdeka No. 12, Jakarta Selatan", school: "President University", category: "Analisis", status: "Aktif" },
+            { id: 2, name: "Siti Nurhaliza", email: "siti.nurha@president.ac.id", address: "Jl. Sudirman No. 45, Bandung", school: "SMA Negeri 5 Bandung", category: "Kreatif", status: "Aktif" },
+            { id: 3, name: "Budi Santoso", email: "budi.santoso@president.ac.id", address: "Jl. Diponegoro No. 8, Surabaya", school: "SMK Negeri 2 Surabaya", category: "Praktik", status: "Aktif" },
+            { id: 4, name: "Dewi Lestari", email: "dewi.lestari@president.ac.id", address: "Jl. Gatot Subroto No. 23, Yogyakarta", school: "SMA Negeri 1 Yogyakarta", category: "Sosial", status: "Aktif" },
+            { id: 5, name: "Rizky Pratama", email: "rizky.pratama@president.ac.id", address: "Jl. Ahmad Yani No. 56, Semarang", school: "SMA Negeri 2 Semarang", category: "Analisis", status: "Nonaktif" },
+            { id: 6, name: "Putri Wulandari", email: "putri.wulan@president.ac.id", address: "Jl. Hayam Wuruk No. 34, Denpasar", school: "SMA Negeri 4 Denpasar", category: "Kreatif", status: "Aktif" },
+            { id: 7, name: "Hendra Wijaya", email: "hendra.wijaya@president.ac.id", address: "Jl. Pemuda No. 19, Medan", school: "President University", category: "Sosial", status: "Aktif" },
+            { id: 8, name: "Anisa Rahma", email: "anisa.rahma@president.ac.id", address: "Jl. Veteran No. 77, Makassar", school: "SMA Negeri 1 Makassar", category: "Praktik", status: "Aktif" },
+            { id: 9, name: "Fajar Maulana", email: "fajar.maulana@president.ac.id", address: "Jl. Teuku Umar No. 41, Palembang", school: "SMA Negeri 3 Palembang", category: "Sosial", status: "Nonaktif" },
+            { id: 10, name: "Rina Kartika", email: "rina.kartika@president.ac.id", address: "Jl. Imam Bonjol No. 15, Malang", school: "SMA Negeri 1 Malang", category: "Kreatif", status: "Aktif" },
+            { id: 11, name: "Yusuf Ibrahim", email: "yusuf.ibrahim@president.ac.id", address: "Jl. Pahlawan No. 90, Bekasi", school: "President University", category: "Analisis", status: "Aktif" },
+            { id: 12, name: "Maya Sari", email: "maya.sari@president.ac.id", address: "Jl. Kartini No. 22, Tangerang", school: "SMA Negeri 2 Tangerang", category: "Sosial", status: "Aktif" },
+            { id: 13, name: "Dimas Prayoga", email: "dimas.prayoga@president.ac.id", address: "Jl. Ki Hajar Dewantara No. 5, Depok", school: "SMA Negeri 1 Depok", category: "Praktik", status: "Aktif" },
+            { id: 14, name: "Laila Fitriani", email: "laila.fitri@president.ac.id", address: "Jl. Cendana No. 33, Bogor", school: "SMA Negeri 3 Bogor", category: "Kreatif", status: "Nonaktif" },
+            { id: 15, name: "Arif Hidayat", email: "arif.hidayat@president.ac.id", address: "Jl. Raya Kuta No. 18, Bali", school: "SMA Negeri 1 Badung", category: "Sosial", status: "Aktif" },
+            { id: 16, name: "Nadia Safitri", email: "nadia.safitri@president.ac.id", address: "Jl. Mawar No. 7, Solo", school: "President University", category: "Analisis", status: "Aktif" },
+            { id: 17, name: "Gilang Ramadhan", email: "gilang.ramadhan@president.ac.id", address: "Jl. Melati No. 44, Padang", school: "SMK Negeri 2 Padang", category: "Praktik", status: "Aktif" },
+            { id: 18, name: "Indah Permatasari", email: "indah.permata@president.ac.id", address: "Jl. Kenanga No. 29, Pontianak", school: "SMA Negeri 2 Pontianak", category: "Kreatif", status: "Aktif" },
+            { id: 19, name: "Bagus Setiawan", email: "bagus.setia@president.ac.id", address: "Jl. Anggrek No. 61, Manado", school: "SMA Negeri 1 Manado", category: "Sosial", status: "Nonaktif" },
+            { id: 20, name: "Citra Amelia", email: "citra.amelia@president.ac.id", address: "Jl. Dahlia No. 13, Balikpapan", school: "President University", category: "Analisis", status: "Aktif" }
+        ];
+
+        let currentPage = 1;
+        const rowsPerPage = 8;
+        let filteredData = [...userData];
+        let mainChart = null;
+
+        // ==================== CHART ====================
+        const chartLabels = ['Analisis', 'Kreatif', 'Praktik', 'Sosial'];
+        const chartValues = [342, 278, 198, 429];
+        const chartColors = ['#00e5a0', '#f59e0b', '#38bdf8', '#a78bfa'];
+
+        function createChart(type) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (mainChart) mainChart.destroy();
+
+            const dataset = {
+                label: 'Jumlah Pengguna',
+                data: chartValues,
+                backgroundColor: type === 'bar' ? chartColors.map(c => c + '33') : undefined,
+                borderColor: chartColors,
+                borderWidth: 2,
+                borderRadius: type === 'bar' ? 8 : 0,
+                hoverBackgroundColor: type === 'bar' ? chartColors.map(c => c + '66') : undefined,
+                tension: 0.4,
+                fill: type === 'line',
+                pointBackgroundColor: chartColors,
+                pointBorderColor: chartColors,
+                pointRadius: type === 'line' ? 5 : 0,
+                pointHoverRadius: type === 'line' ? 8 : 0,
+            };
+
+            if (type === 'line') {
+                dataset.backgroundColor = (ctx2) => {
+                    const gradient = ctx2.chart.ctx.createLinearGradient(0, 0, 0, 280);
+                    gradient.addColorStop(0, 'rgba(0,229,160,0.25)');
+                    gradient.addColorStop(1, 'rgba(0,229,160,0.01)');
+                    return gradient;
+                };
+                dataset.borderColor = '#00e5a0';
+                dataset.pointBackgroundColor = '#00e5a0';
+            }
+
+            mainChart = new Chart(ctx, {
+                type: type,
+                data: { labels: chartLabels, datasets: [dataset] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#161d2e',
+                            titleColor: '#e8ecf4',
+                            bodyColor: '#7a8ba7',
+                            borderColor: '#1e2a3f',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: { label: (ctx2) => ' ' + ctx2.parsed.y + ' pengguna' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(30,42,63,0.5)', drawBorder: false },
+                            ticks: { color: '#7a8ba7', font: { family: 'DM Sans', size: 12 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(30,42,63,0.5)', drawBorder: false },
+                            ticks: { color: '#7a8ba7', font: { family: 'DM Sans', size: 12 } },
+                            beginAtZero: true
+                        }
+                    },
+                    animation: { duration: 800, easing: 'easeOutQuart' }
+                }
+            });
+        }
+
+        document.querySelectorAll('.chart-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                createChart(tab.dataset.type);
+            });
+        });
+
+        // ==================== TABLE ====================
+        function getCategoryBadge(cat) {
+            const map = { 'Analisis': 'badge-green', 'Kreatif': 'badge-amber', 'Praktik': 'badge-blue', 'Sosial': 'badge-red' };
+            return `<span class="badge ${map[cat] || 'badge-green'}">${cat}</span>`;
+        }
+        function getStatusBadge(status) {
+            return status === 'Aktif'
+                ? `<span class="badge badge-green">Aktif</span>`
+                : `<span class="badge badge-red">Nonaktif</span>`;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('userTableBody');
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = Math.min(start + rowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(start, end);
+
+            tbody.innerHTML = pageData.map((user, i) => `
+                <tr>
+                    <td style="color:var(--text-secondary); font-weight:500;">${start + i + 1}</td>
+                    <td>
+                        <div class="user-cell">
+                            <img class="user-avatar" src="https://picsum.photos/seed/user${user.id}/40/40.jpg" alt="${user.name}">
+                            <div>
+                                <div class="user-name">${user.name}</div>
+                                <div class="user-email">${user.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="color:var(--text-secondary); max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${user.address}">${user.address}</td>
+                    <td style="font-weight:500;">${user.school}</td>
+                    <td>${getCategoryBadge(user.category)}</td>
+                    <td>${getStatusBadge(user.status)}</td>
+                    <td>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn" title="Edit" onclick="editUser(${user.id})"><i class="fas fa-pen"></i></button>
+                            <button class="action-btn danger" title="Hapus" onclick="deleteUser(${user.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            const total = filteredData.length;
+            document.getElementById('paginationInfo').textContent =
+                total > 0 ? `Menampilkan ${start + 1}-${end} dari ${total} data` : 'Tidak ada data ditemukan';
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const totalPages = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
+            const container = document.getElementById('paginationBtns');
+            let html = `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled style="opacity:0.4;cursor:default;"' : ''}><i class="fas fa-chevron-left" style="font-size:11px;"></i></button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled style="opacity:0.4;cursor:default;"' : ''}><i class="fas fa-chevron-right" style="font-size:11px;"></i></button>`;
+            container.innerHTML = html;
+        }
+
+        function goToPage(page) {
+            const totalPages = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderTable();
+        }
+
+        document.getElementById('tableSearch').addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            filteredData = userData.filter(u =>
+                u.name.toLowerCase().includes(query) ||
+                u.email.toLowerCase().includes(query) ||
+                u.address.toLowerCase().includes(query) ||
+                u.school.toLowerCase().includes(query) ||
+                u.category.toLowerCase().includes(query)
+            );
+            currentPage = 1;
+            renderTable();
+        });
+
+        // ==================== CRUD ====================
+        function editUser(id) {
+            const user = userData.find(u => u.id === id);
+            if (!user) return;
+            document.getElementById('inputName').value = user.name;
+            document.getElementById('inputEmail').value = user.email;
+            document.getElementById('inputAddress').value = user.address;
+            document.getElementById('inputSchool').value = user.school;
+            document.getElementById('inputCategory').value = user.category;
+            document.getElementById('addUserModal').classList.add('show');
+            document.getElementById('addUserModal').dataset.editId = id;
+            document.querySelector('.modal-title').textContent = 'Edit Pengguna';
+            document.getElementById('submitUser').textContent = 'Simpan Perubahan';
+        }
+
+        function deleteUser(id) {
+            const idx = userData.findIndex(u => u.id === id);
+            if (idx === -1) return;
+            const name = userData[idx].name;
+            userData.splice(idx, 1);
+            refreshFilteredData();
+            const totalPages = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
+            if (currentPage > totalPages) currentPage = totalPages;
+            renderTable();
+            showToast(`Data ${name} berhasil dihapus`, 'error');
+        }
+
+        function refreshFilteredData() {
+            const query = document.getElementById('tableSearch').value.toLowerCase().trim();
+            filteredData = userData.filter(u =>
+                u.name.toLowerCase().includes(query) ||
+                u.email.toLowerCase().includes(query) ||
+                u.address.toLowerCase().includes(query) ||
+                u.school.toLowerCase().includes(query) ||
+                u.category.toLowerCase().includes(query)
+            );
+        }
+
+        document.getElementById('addUserBtn').addEventListener('click', () => {
+            resetForm();
+            document.getElementById('addUserModal').classList.add('show');
+            document.querySelector('.modal-title').textContent = 'Tambah Pengguna Baru';
+            document.getElementById('submitUser').textContent = 'Simpan Data';
+        });
+        document.getElementById('cancelModal').addEventListener('click', () => {
+            document.getElementById('addUserModal').classList.remove('show');
+        });
+        document.getElementById('addUserModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('addUserModal')) {
+                document.getElementById('addUserModal').classList.remove('show');
+            }
+        });
+
+        function resetForm() {
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputEmail').value = '';
+            document.getElementById('inputAddress').value = '';
+            document.getElementById('inputSchool').value = '';
+            document.getElementById('inputCategory').value = 'Analisis';
+            delete document.getElementById('addUserModal').dataset.editId;
+        }
+
+        document.getElementById('submitUser').addEventListener('click', () => {
+            const name = document.getElementById('inputName').value.trim();
+            const email = document.getElementById('inputEmail').value.trim();
+            const address = document.getElementById('inputAddress').value.trim();
+            const school = document.getElementById('inputSchool').value.trim();
+            const category = document.getElementById('inputCategory').value;
+            if (!name || !email || !address || !school) {
+                showToast('Semua field harus diisi!', 'error');
+                return;
+            }
+            const editId = document.getElementById('addUserModal').dataset.editId;
+            if (editId) {
+                const user = userData.find(u => u.id === parseInt(editId));
+                if (user) { user.name = name; user.email = email; user.address = address; user.school = school; user.category = category; }
+                showToast(`Data ${name} berhasil diperbarui`, 'success');
+            } else {
+                const newId = Math.max(...userData.map(u => u.id)) + 1;
+                userData.push({ id: newId, name, email, address, school, category, status: 'Aktif' });
+                showToast(`Pengguna ${name} berhasil ditambahkan`, 'success');
+            }
+            refreshFilteredData();
+            renderTable();
+            document.getElementById('addUserModal').classList.remove('show');
+            resetForm();
+        });
+
+        // ==================== TOAST ====================
+        function showToast(message, type) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3000);
+        }
+
+        // ==================== EXPORT CSV ====================
+        document.getElementById('exportTableCSV').addEventListener('click', () => {
+            const headers = ['No', 'Nama', 'Email', 'Alamat', 'Sekolah', 'Kategori', 'Status'];
+            const rows = filteredData.map((u, i) => [i + 1, u.name, u.email, u.address, u.school, u.category, u.status]);
+            let csv = headers.join(',') + '\n';
+            rows.forEach(r => { csv += r.map(v => `"${v}"`).join(',') + '\n'; });
+            downloadCSV(csv, 'data_pengguna_presuniv.csv');
+            showToast('File CSV berhasil diunduh', 'success');
+        });
+
+        document.getElementById('exportChartCSV').addEventListener('click', () => {
+            let csv = 'Kategori,Jumlah\n';
+            chartLabels.forEach((label, i) => { csv += `"${label}",${chartValues[i]}\n`; });
+            downloadCSV(csv, 'statistik_kategori.csv');
+            showToast('Chart CSV berhasil diunduh', 'success');
+        });
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== SIDEBAR ====================
+        document.getElementById('hamburgerBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+        document.addEventListener('click', (e) => {
+            const sidebar = document.getElementById('sidebar');
+            const hamburger = document.getElementById('hamburgerBtn');
+            if (window.innerWidth <= 1024 && !sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        // ==================== COUNT-UP ====================
+        function animateCountUp() {
+            document.querySelectorAll('.stat-value[data-count]').forEach(el => {
+                const target = parseInt(el.dataset.count);
+                const duration = 1200;
+                const start = performance.now();
+                function update(now) {
+                    const elapsed = now - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const ease = 1 - Math.pow(1 - progress, 4);
+                    el.textContent = Math.round(target * ease).toLocaleString('id-ID');
+                    if (progress < 1) requestAnimationFrame(update);
+                }
+                requestAnimationFrame(update);
+            });
+        }
+
+        // ==================== RESPONSIVE ====================
+        function handleResponsiveGrid() {
+            const grid = document.querySelector('.chart-grid');
+            if (!grid) return;
+            grid.style.gridTemplateColumns = window.innerWidth <= 900 ? '1fr' : '1fr 340px';
+        }
+        window.addEventListener('resize', handleResponsiveGrid);
+
+        // ==================== INIT DASHBOARD ====================
+        function initDashboard() {
+            createChart('bar');
+            renderTable();
+            animateCountUp();
+            handleResponsiveGrid();
+        }
+    </script>
+</body>
+</html>
